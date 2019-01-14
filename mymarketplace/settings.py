@@ -55,7 +55,9 @@ ROOT_URLCONF = 'mymarketplace.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [
+            os.path.join(BASE_DIR, 'templates')
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -106,7 +108,9 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
 
-LOGIN_URL = 'marketplace:index'
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'marketplace:index'
+LOGOUT_REDIRECT_URL = 'marketplace:index'
 
 # Internationalization
 # https://docs.djangoproject.com/en/2.1/topics/i18n/

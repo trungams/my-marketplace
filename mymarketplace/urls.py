@@ -16,9 +16,34 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from django.views.generic import RedirectView
+# from django.views.generic.edit import CreateView
+from django.contrib.auth import views as auth_views
+
+# from marketplace.forms import CustomUserCreationForm
+from marketplace.views import register
 
 urlpatterns = [
-    path('', RedirectView.as_view(pattern_name='marketplace:index')),
+    path('', RedirectView.as_view(pattern_name='marketplace:index'), name='index'),
+    path(
+        'login',
+        auth_views.LoginView.as_view(
+            template_name='registration/login.html',
+            redirect_field_name='index',
+            redirect_authenticated_user=True
+        ),
+        name='login'
+    ),
+    # path(
+    #     'register',
+    #     CreateView.as_view(
+    #         template_name='registration/register.html',
+    #         form_class=CustomUserCreationForm,
+    #         success_url='login'
+    #     ),
+    #     name='register'
+    # ),
+    path('register', register, name='register'),
+    path('logout', auth_views.LogoutView.as_view(), name='logout'),
     path('admin/', admin.site.urls),
     path('marketplace/', include('marketplace.urls'))
 ]

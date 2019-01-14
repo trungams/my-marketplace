@@ -1,0 +1,13 @@
+{% extends 'base_layout.html' %}
+
+{% block title %}Add to cart{% endblock %}
+
+{% block content %}
+<h2>Add item '{{ product }}' to your cart</h2>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Add to cart</button>
+</form>
+Price is {{ price }} per item. There are {{ available }} items left in inventory.
+{% endblock %}

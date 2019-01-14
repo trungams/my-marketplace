@@ -2,6 +2,7 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
+from django.core.exceptions import ValidationError
 
 # Create your models here.
 
@@ -11,7 +12,7 @@ class MarketplaceUser(AbstractUser):
     really adding any new fields to AbstractUser for now, but this gives us the
     option to extend this model later on.
     """
-    pass
+    email = models.EmailField(unique=True, max_length=80)
 
 
 class Product(models.Model):
@@ -88,7 +89,7 @@ class CartEntry(models.Model):
         return cost
 
     def __str__(self):
-        return f"Entry: {self.associated_cart}. Product: {self.product}, amount: {self.product_count}"
+        return f"Entry: {self.associated_cart.user}. Product: {self.product}, amount: {self.product_count}"
 
 
 @receiver(post_save, sender=CartEntry)
@@ -102,9 +103,12 @@ def add_entry_to_cart(sender, instance, **kwargs):
     :return:
     """
     if instance.product_count <= 0:
-        raise ValueError("Must add a valid amount")
-    elif instance.product_count > instance.product.inventory_count:
-        raise ValueError("There are not enough items in inventory")
+        raise ValidationError("Must add a valid amount.")
+    # This is to avoid possible race condition. During the process of checking whether
+    # a product is available. The product's true amount might have been decreased without
+    # the controller process knowing.
+    elif instance.product.inventory_count < 0:
+        raise ValidationError("There are not enough items in inventory.")
     else:
         instance.associated_cart.total_cost += instance.cost
         instance.associated_cart.item_count += instance.product_count

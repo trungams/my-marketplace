@@ -1,0 +1,21 @@
+{% extends 'base_layout.html' %}
+
+{% block title %}Homepage{% endblock %}
+
+{% block content %}
+{% if user.is_authenticated %}
+    <p>Hello, {{ user.username }}</p>
+    <p><a href="{% url 'logout' %}">Logout</a></p>
+{% else %}
+    <p>Hello, guest. You are not logged in.</p>
+    <a href="{% url 'login' %}">Login</a> |
+    <a href="{% url 'register' %}">Register</a>
+{% endif %}
+<p>Choose an action on marketplace</p>
+<ul>
+    <li><a href="{% url 'marketplace:view_products' %}">Browse all available products</a></li>
+    <li><a href="{% url 'marketplace:view_cart' %}">View your cart</a></li>
+
+</ul>
+
+{% endblock %}

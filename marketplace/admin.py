@@ -11,7 +11,7 @@ class CustomUserAdmin(UserAdmin):
     add_form = CustomUserCreationForm
     form = CustomUserChangeForm
     model = MarketplaceUser
-    list_display = ['email', 'username']
+    list_display = ['email', 'username',]
 
 
 admin.site.register(MarketplaceUser, CustomUserAdmin)

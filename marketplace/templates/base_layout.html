@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Base layout{% endblock %}</title>
+</head>
+<body>
+    <p><a href="{% url 'index' %}">Home</a></p>
+    <main>
+        {% block content %}
+        {% endblock %}
+    </main>
+</body>
+</html>
