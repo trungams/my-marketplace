@@ -35,7 +35,7 @@ def register(request):
         return HttpResponseNotAllowed(request)
 
 
-def retrieve_products(request):
+def api_retrieve_products(request):
     """TODO: write doc
 
     :param request:
@@ -52,6 +52,7 @@ def retrieve_products(request):
         category = request.GET.get("category", "")
 
         products_list = Product.objects.values(
+            "id",
             "title",
             "price",
             "inventory_count",
@@ -69,7 +70,7 @@ def retrieve_products(request):
         return JsonResponse(ctx)
 
 
-def retrieve_single_product(request, pk):
+def api_retrieve_single_product(request, pk):
     """TODO"""
     if request.method != "GET":
         return HttpResponseNotAllowed(request)
@@ -89,7 +90,7 @@ def retrieve_single_product(request, pk):
 
 
 @login_required()
-def retrieve_cart(request):
+def api_retrieve_cart(request):
     """TODO: write doc
 
     :param request:
@@ -120,7 +121,7 @@ def retrieve_cart(request):
 
 
 @login_required()
-def add_to_cart(request, pk):
+def api_add_to_cart(request, pk):
     """TODO"""
     current_product = get_object_or_404(Product, pk=pk)
 
@@ -169,7 +170,13 @@ def add_to_cart(request, pk):
 
 
 @login_required()
-def checkout_cart(request):
+def api_remove_from_cart(request, pk):
+    """TODO"""
+    current_product = get_object_or_404(Product, pk=pk)
+
+
+@login_required()
+def api_checkout_cart(request):
     """TODO"""
     if request.method == "GET":
         # TODO: render a template with form to checkout

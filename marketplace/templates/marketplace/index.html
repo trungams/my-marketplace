@@ -12,9 +12,12 @@
     <a href="{% url 'register' %}">Register</a>
 {% endif %}
 <p>Choose an action on marketplace</p>
-<ul>
-    <li><a href="{% url 'marketplace:view_products' %}">Browse all available products</a></li>
-    <li><a href="{% url 'marketplace:view_cart' %}">View your cart</a></li>
+<ul>User view
+    <li>Random</li>
+</ul>
+<ul>API
+    <li><a href="{% url 'marketplace:api_view_products' %}">Browse all available products</a></li>
+    <li><a href="{% url 'marketplace:api_view_cart' %}">View your cart</a></li>
 
 </ul>
 
