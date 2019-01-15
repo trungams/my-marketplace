@@ -3,6 +3,7 @@ from django.db import models, transaction
 from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
 from django.core.exceptions import ValidationError
+from django.shortcuts import reverse
 
 # Create your models here.
 
@@ -32,6 +33,12 @@ class Product(models.Model):
     description = models.TextField(default="", null=True, blank=True)
     seller = models.ForeignKey(MarketplaceUser, on_delete=models.CASCADE, default=None, null=True)
 
+    def get_url_view_single_product(self):
+        return reverse("marketplace:api_view_single_product", args=[str(self.id)])
+
+    def get_url_add_to_cart(self):
+        return reverse("marketplace:api_add_to_cart", args=[str(self.id)])
+
     def __str__(self):
         return f"Product: {self.title}, price: {self.price}. Amount in store: {self.inventory_count}"
 
@@ -56,7 +63,6 @@ class Cart(models.Model):
         cart_entries = cls.objects.select_for_update().get(associated_cart__id=pk)
 
         map(CartEntry.checkout_entry, cart_entries)
-
 
     def __str__(self):
         return f"{self.user}'s cart. There are {self.item_count} items and total cost is {self.total_cost}"
@@ -112,8 +118,22 @@ class CartEntry(models.Model):
         cart_entry.product.save()
         cart_entry.delete()
 
+    def get_url_update_cart_entry(self):
+        return reverse("marketplace:api_update_cart_entry", args=[str(self.id)])
+
+    def get_url_checkout_cart_entry(self):
+        return reverse("marketplace:api_checkout_cart_entry", args=[str(self.id)])
+
     def __str__(self):
-        return f"Entry: {self.associated_cart.user}. Product: {self.product}, amount: {self.product_count}"
+        return f"Entry: {self.associated_cart.user}'s cart. Product: {self.product.title}, amount: {self.product_count}"
+
+
+@receiver(post_save, sender=MarketplaceUser)
+def create_default_cart_for_new_user(sender, instance, **kwargs):
+    """TODO"""
+    if instance:
+        new_cart = Cart(user=instance)
+        new_cart.save()
 
 
 @receiver(post_save, sender=CartEntry)
