@@ -18,7 +18,11 @@
 <ul>API
     <li><a href="{% url 'marketplace:api_view_products' %}">Browse all available products</a></li>
     <li><a href="{% url 'marketplace:api_view_cart' %}">View your cart</a></li>
-
+</ul>
+<ul>For single items
+    <li><a href="{% url 'marketplace:api_view_single_product' 1 %}">View the first product</a></li>
+    <li><a href="{% url 'marketplace:api_add_to_cart' 1 %}">Add first product to cart</a></li>
+    <li><a href="{% url 'marketplace:api_update_cart_entry' 6 %}">Update your first cart entry here</a></li>
 </ul>
 
 {% endblock %}

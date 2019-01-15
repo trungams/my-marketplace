@@ -44,7 +44,13 @@ class CartEntryAddForm(forms.ModelForm):
         model = CartEntry
         fields = ("product_count",)
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["product_count"].initial = 1
+        print(self)
+
     def clean_product_count(self):
+        """TODO"""
         data = self.cleaned_data["product_count"]
 
         # In addition to checking whether the amount added to cart is valid, we should also
@@ -57,4 +63,27 @@ class CartEntryAddForm(forms.ModelForm):
 
 class CartEntryUpdateForm(forms.ModelForm):
     """TODO"""
-    pass
+    product_count = forms.IntegerField(min_value=0)
+
+    class Meta:
+        model = CartEntry
+        fields = ("product_count",)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        instance = getattr(self, "instance", None)
+        if instance:
+            self.fields["product_count"].initial = instance.product_count
+
+    def clean_product_count(self):
+        """Similar to creating cart entry, we do not allow invalid parameters
+        to be passed in this form.
+
+        :return:
+        """
+        data = self.cleaned_data["product_count"]
+
+        if data <= 0:
+            raise ValidationError("Must be a valid amount.")
+
+        return data

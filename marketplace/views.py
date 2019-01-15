@@ -1,5 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponseNotAllowed, JsonResponse
+from django.http import (
+    HttpResponse, HttpResponseNotAllowed, HttpResponseForbidden, JsonResponse
+)
 from django.forms.models import model_to_dict
 from django.contrib.auth.decorators import login_required
 
@@ -104,6 +106,7 @@ def api_retrieve_cart(request):
         current_cart, created = Cart.objects.get_or_create(user=request.user)
 
         cart_entries = CartEntry.objects.values(
+            "id",
             "product__title",
             "product_count",
             "cost"
@@ -125,19 +128,18 @@ def api_add_to_cart(request, pk):
     """TODO"""
     current_product = get_object_or_404(Product, pk=pk)
 
-    if request.method == "GET":
-        ctx = {}
+    ctx = {}
 
+    if request.method == "GET":
         form = CartEntryAddForm()
 
         ctx["form"] = form
         ctx["product"] = current_product.title
         ctx["available"] = current_product.inventory_count
         ctx["price"] = current_product.price
+
         return render(request, "marketplace/add-to-cart.html", ctx)
     elif request.method == "POST":
-        ctx = {}
-
         current_cart, created = Cart.objects.get_or_create(user=request.user)
 
         form = CartEntryAddForm(request.POST)
@@ -170,19 +172,90 @@ def api_add_to_cart(request, pk):
 
 
 @login_required()
-def api_remove_from_cart(request, pk):
+def api_update_cart_entry(request, pk):
     """TODO"""
-    current_product = get_object_or_404(Product, pk=pk)
+    current_cart_entry = get_object_or_404(CartEntry, pk=pk)
+    current_product = current_cart_entry.product
+
+    ctx = {}
+
+    if request.user != current_cart_entry.associated_cart.user:
+        return HttpResponseForbidden(request)
+    if request.method == "GET":
+        form = CartEntryUpdateForm(instance=current_cart_entry)
+
+        ctx["form"] = form
+        ctx["cart_id"] = current_cart_entry.id
+        ctx["product"] = current_product.title
+        ctx["available"] = current_product.inventory_count
+        ctx["price"] = current_product.price
+
+        return render(request, "marketplace/update-cart.html", ctx)
+    elif request.method == "POST":
+        if request.POST.get("_method") == "delete":
+            current_cart_entry.delete()
+            return HttpResponse(request, status=204)
+
+        form = CartEntryUpdateForm(request.POST, instance=current_cart_entry)
+
+        try:
+            if form.is_valid():
+                # process data in form.cleaned_data as required
+                if current_product.inventory_count < form.cleaned_data["product_count"]:
+                    ctx["success"] = False
+                    ctx["message"] = "Cannot add more than the current number of available items."
+                else:
+                    form.save()
+                    ctx["success"] = True
+            else:
+                ctx["success"] = False
+                ctx["message"] = "Invalid form data!"
+        except ValidationError:
+            ctx["success"] = False
+            ctx["message"] = "Invalid form data!"
+
+        return JsonResponse(ctx)
+    else:
+        return HttpResponseNotAllowed(request)
+
+
+@login_required()
+def api_checkout_cart_entry(request, pk):
+    """TODO"""
+    if request.method == "POST":
+        current_cart_entry = get_object_or_404(CartEntry, pk=pk)
+
+        if request.user != current_cart_entry.associated_cart.user:
+            return HttpResponseForbidden(request)
+        else:
+            ctx = {}
+
+            try:
+                CartEntry.checkout_entry(pk=pk)
+                ctx["success"] = True
+            except ValueError:
+                ctx["success"] = False
+
+            return JsonResponse(ctx)
+    else:
+        return HttpResponseNotAllowed(request)
 
 
 @login_required()
 def api_checkout_cart(request):
     """TODO"""
-    if request.method == "GET":
-        # TODO: render a template with form to checkout
-        return HttpResponseNotAllowed(request)
-    elif request.method == "POST":
-        pass
+    if request.method == "POST":
+        current_cart = Cart.objects.get_or_create(user=request.user)
+
+        ctx = {}
+
+        try:
+            Cart.checkout_cart(pk=current_cart.id)
+            ctx["success"] = True
+        except ValueError:
+            ctx["success"] = False
+
+        return JsonResponse(ctx)
     else:
         return HttpResponseNotAllowed(request)
 
@@ -194,6 +267,6 @@ def update_inventory(request):
         # TODO: render a template with form to modify inventory
         return HttpResponseNotAllowed(request)
     elif request.method == "POST":
-        pass
+        return HttpResponse(request, status=204)
     else:
         return HttpResponseNotAllowed(request)

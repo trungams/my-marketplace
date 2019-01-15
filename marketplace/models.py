@@ -1,5 +1,5 @@
 from django.contrib.auth.models import AbstractUser
-from django.db import models
+from django.db import models, transaction
 from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
 from django.core.exceptions import ValidationError
@@ -30,7 +30,7 @@ class Product(models.Model):
     inventory_count = models.IntegerField(default=0)
     category = models.CharField(max_length=100, default="miscellaneous", null=True, blank=True)
     description = models.TextField(default="", null=True, blank=True)
-    seller = models.ForeignKey(MarketplaceUser, on_delete=models.CASCADE, default=None)
+    seller = models.ForeignKey(MarketplaceUser, on_delete=models.CASCADE, default=None, null=True)
 
     def __str__(self):
         return f"Product: {self.title}, price: {self.price}. Amount in store: {self.inventory_count}"
@@ -44,9 +44,19 @@ class Cart(models.Model):
 
     Attributes:
     """
+    id = models.AutoField(primary_key=True)
     user = models.OneToOneField(MarketplaceUser, on_delete=models.CASCADE)
     item_count = models.PositiveIntegerField(default=0)
     total_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+
+    @classmethod
+    @transaction.atomic
+    def checkout_cart(cls, pk):
+        """TODO"""
+        cart_entries = cls.objects.select_for_update().get(associated_cart__id=pk)
+
+        map(CartEntry.checkout_entry, cart_entries)
+
 
     def __str__(self):
         return f"{self.user}'s cart. There are {self.item_count} items and total cost is {self.total_cost}"
@@ -62,6 +72,7 @@ class CartEntry(models.Model):
 
     Attributes:
     """
+    id = models.AutoField(primary_key=True)
     associated_cart = models.ForeignKey(Cart, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     product_count = models.PositiveIntegerField()
@@ -88,6 +99,19 @@ class CartEntry(models.Model):
         cost = self.product.price * self.product_count
         return cost
 
+    @classmethod
+    @transaction.atomic
+    def checkout_entry(cls, pk):
+        """TODO"""
+        cart_entry = cls.objects.select_for_update().get(pk=pk)
+
+        if cart_entry.product.inventory_count < cart_entry.product_count:
+            raise ValueError("There are not enough items in inventory.")
+        cart_entry.product.inventory_count -= cart_entry.product_count
+
+        cart_entry.product.save()
+        cart_entry.delete()
+
     def __str__(self):
         return f"Entry: {self.associated_cart.user}. Product: {self.product}, amount: {self.product_count}"
 
@@ -102,12 +126,10 @@ def add_entry_to_cart(sender, instance, **kwargs):
     :param kwargs:
     :return:
     """
-    if instance.product_count <= 0:
-        raise ValidationError("Must add a valid amount.")
     # This is to avoid possible race condition. During the process of checking whether
     # a product is available. The product's true amount might have been decreased without
     # the controller process knowing.
-    elif instance.product.inventory_count < 0:
+    if instance.product.inventory_count < 0:
         raise ValidationError("There are not enough items in inventory.")
     else:
         instance.associated_cart.total_cost += instance.cost

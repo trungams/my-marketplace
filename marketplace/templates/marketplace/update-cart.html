@@ -1,0 +1,18 @@
+{% extends 'base_layout.html' %}
+
+{% block title %}Update cart{% endblock %}
+
+{% block content %}
+<h2>Update item '{{ product }}' in your cart</h2>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Update cart</button>
+</form>
+<form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="_method" value="delete">
+    <button>Remove item from cart</button>
+</form>
+Price is {{ price }} per item. There are {{ available }} items left in inventory.
+{% endblock %}
