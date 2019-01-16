@@ -49,9 +49,13 @@ def api_retrieve_products(request):
         ctx = {}
 
         product_name = request.GET.get("product", "")
-        # price_range_lower = request.GET.get("lo", "0.00")
-        # price_range_upper = request.GET.get("hi", "10000000000")
         category = request.GET.get("category", "")
+        show_available = request.GET.get("availability", "false").lower()
+
+        if show_available == "true":
+            lower_bound = 0
+        else:
+            lower_bound = -1
 
         products_list = Product.objects.values(
             "id",
@@ -62,7 +66,7 @@ def api_retrieve_products(request):
             "description",
             "seller__username"
         ).filter(
-            inventory_count__gt=0,
+            inventory_count__gt=lower_bound,
             title__icontains=product_name,
             category__icontains=category
         ).order_by("title")
