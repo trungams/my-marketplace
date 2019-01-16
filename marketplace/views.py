@@ -12,17 +12,18 @@ from .forms import *
 
 
 def index(request):
-    """TODO: return available URLs so that visitors know how to navigate
-
-    :param request:
-    :return:
-    """
+    """Returns the index page with sitemap"""
     return render(request, "marketplace/index.html")
 
 
 def register(request):
-    """TODO"""
+    """Let user register a new account on our website.
+
+    Supported HTTP methods: GET, POST
+    """
+
     if request.user.is_authenticated:
+        # Registered users don't need to access this page
         return redirect("index")
     if request.method == "GET":
         form = CustomUserCreationForm()
@@ -32,16 +33,21 @@ def register(request):
         if form.is_valid():
             form.save()
             return redirect("login")
+        # Returns to register site in case of error
         return redirect("register")
     else:
         return HttpResponseNotAllowed(request)
 
 
 def api_retrieve_products(request):
-    """TODO: write doc
+    """Let users view and search for products from our marketplace.
 
-    :param request:
-    :return:
+    Supported HTTP methods: GET
+
+    Supported GET parameters:
+        product: Search based on products' title
+        category: Search based on products' category
+        availability (true/false): Search based on products' availability
     """
     if request.method != "GET":
         return HttpResponseNotAllowed(request)
@@ -52,6 +58,7 @@ def api_retrieve_products(request):
         category = request.GET.get("category", "")
         show_available = request.GET.get("availability", "false").lower()
 
+        # if availability == true is GET request, show products in stock
         if show_available == "true":
             lower_bound = 0
         else:
@@ -77,7 +84,10 @@ def api_retrieve_products(request):
 
 
 def api_retrieve_single_product(request, pk):
-    """TODO"""
+    """Returns product detailed information based on product ID
+
+    Supported HTTP methods: GET
+    """
     if request.method != "GET":
         return HttpResponseNotAllowed(request)
     else:
@@ -97,10 +107,9 @@ def api_retrieve_single_product(request, pk):
 
 @login_required()
 def api_retrieve_cart(request):
-    """TODO: write doc
+    """Returns user's cart information including items list, total cost
 
-    :param request:
-    :return:
+    Supported HTTP methods: GET
     """
     if request.method != "GET":
         return HttpResponseNotAllowed(request)
@@ -129,12 +138,19 @@ def api_retrieve_cart(request):
 
 @login_required()
 def api_add_to_cart(request, pk):
-    """TODO"""
+    """API view to add a product to cart.
+
+    Supported HTTP methods: GET, POST
+
+    :param request: Current request
+    :param pk: Product's ID
+    """
     current_product = get_object_or_404(Product, pk=pk)
 
     ctx = {}
 
     if request.method == "GET":
+        # Render form with CSRF token
         form = CartEntryAddForm()
 
         ctx["form"] = form
@@ -150,14 +166,14 @@ def api_add_to_cart(request, pk):
 
         try:
             if form.is_valid():
-                # process data in form.cleaned_data as required
+                # Process data in form.cleaned_data as required
                 if current_product.inventory_count < form.cleaned_data["product_count"]:
                     ctx["success"] = False
                     ctx["message"] = "Cannot add more than the current number of available items."
                 else:
                     new_cart_entry = form.save(commit=False)
 
-                    # adding necessary information before adding to database
+                    # Adding necessary information before adding to database
                     new_cart_entry.associated_cart = current_cart
                     new_cart_entry.product = current_product
                     new_cart_entry.save()
@@ -177,15 +193,23 @@ def api_add_to_cart(request, pk):
 
 @login_required()
 def api_update_cart_entry(request, pk):
-    """TODO"""
+    """API view to update a cart entry
+
+    Supported HTTP methods: GET, POST
+
+    :param request: Current request
+    :param pk: Cart entry's ID
+    """
     current_cart_entry = get_object_or_404(CartEntry, pk=pk)
     current_product = current_cart_entry.product
 
     ctx = {}
 
     if request.user != current_cart_entry.associated_cart.user:
+        # An outsider should not manipulate other people's carts
         return HttpResponseForbidden(request)
     if request.method == "GET":
+        # Render form with CSRF token
         form = CartEntryUpdateForm(instance=current_cart_entry)
 
         ctx["form"] = form
@@ -197,6 +221,7 @@ def api_update_cart_entry(request, pk):
         return render(request, "marketplace/update-cart.html", ctx)
     elif request.method == "POST":
         if request.POST.get("_method") == "delete":
+            # A bit of workaround instead of sending DELETE requests
             current_cart_entry.delete()
             return HttpResponse(request, status=204)
 
@@ -204,7 +229,7 @@ def api_update_cart_entry(request, pk):
 
         try:
             if form.is_valid():
-                # process data in form.cleaned_data as required
+                # Process data in form.cleaned_data as required
                 if current_product.inventory_count < form.cleaned_data["product_count"]:
                     ctx["success"] = False
                     ctx["message"] = "Cannot add more than the current number of available items."
@@ -225,7 +250,13 @@ def api_update_cart_entry(request, pk):
 
 @login_required()
 def api_checkout_cart_entry(request, pk):
-    """TODO"""
+    """API view to checkout a cart entry
+
+    Supported HTTP methods: POST
+
+    :param request: Current request
+    :param pk: Cart entry's ID
+    """
     if request.method == "POST":
         current_cart_entry = get_object_or_404(CartEntry, pk=pk)
 
@@ -247,7 +278,12 @@ def api_checkout_cart_entry(request, pk):
 
 @login_required()
 def api_checkout_cart(request):
-    """TODO"""
+    """API view to checkout cart
+
+    Supported HTTP methods: POST
+
+    :param request: Current request
+    """
     if request.method == "POST":
         current_cart, created = Cart.objects.get_or_create(user=request.user)
 
@@ -266,7 +302,7 @@ def api_checkout_cart(request):
 
 @login_required()
 def update_inventory(request):
-    """TODO"""
+    """API view to update inventory"""
     if request.method == "GET":
         # TODO: render a template with form to modify inventory
         return HttpResponseNotAllowed(request)
