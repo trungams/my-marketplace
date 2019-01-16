@@ -33,15 +33,6 @@ urlpatterns = [
         ),
         name='login'
     ),
-    # path(
-    #     'register',
-    #     CreateView.as_view(
-    #         template_name='registration/register.html',
-    #         form_class=CustomUserCreationForm,
-    #         success_url='login'
-    #     ),
-    #     name='register'
-    # ),
     path('register', register, name='register'),
     path('logout', auth_views.LogoutView.as_view(), name='logout'),
     path('admin/', admin.site.urls),
