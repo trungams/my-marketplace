@@ -5,7 +5,7 @@ from ..models import *
 
 
 class UserAccountTestCase(TransactionTestCase):
-    """TODO"""
+    """Tester class for basic login/logout functions on our website"""
     def setUp(self):
         # Create two users, empty carts should to be there by default
         MarketplaceUser.objects.create_user(
@@ -86,12 +86,13 @@ class UserAccountTestCase(TransactionTestCase):
 
 
 class MarketplaceClient(Client):
+    """A subclass for Client to deal with HTTP request methods more easily"""
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
 
 class MarketplaceViewTestCase(TransactionTestCase):
-    """TODO"""
+    """Tester class for any logic error and vulnerability in our views implementation"""
     client_class = MarketplaceClient
 
     def __init__(self, *args, **kwargs):
@@ -205,7 +206,7 @@ class MarketplaceViewTestCase(TransactionTestCase):
             self.fail()
 
     def test_view_index(self):
-        """Tests for  index page"""
+        """Tests for index page"""
         url = reverse("marketplace:index")
         allowed_http_methods = ["GET", "POST", "HEAD", "TRACE", "OPTIONS", "PUT", "PATCH", "DELETE"]
 
@@ -217,14 +218,14 @@ class MarketplaceViewTestCase(TransactionTestCase):
         allowed_http_methods = ["HEAD", "GET", "POST"]
         forbidden_http_methods = ["TRACE", "OPTIONS", "PUT", "PATCH", "DELETE"]
 
+        # This is to avoid redirection when our client is already logged in
         self.client.logout()
 
         self._check_http_not_allowed(url, forbidden_http_methods)
         self._check_http_allowed(url, allowed_http_methods)
 
     def test_view_api_retrieve_products(self):
-        """Test for api_retrieve_products view"""
-        # TODO
+        """Tests for api_retrieve_products view"""
         url = reverse("marketplace:api_view_products")
         allowed_http_methods = ["HEAD", "GET"]
         forbidden_http_methods = ["POST", "TRACE", "OPTIONS", "PUT", "PATCH", "DELETE"]
@@ -233,7 +234,7 @@ class MarketplaceViewTestCase(TransactionTestCase):
         self._check_http_allowed(url, allowed_http_methods)
 
     def test_view_api_retrieve_single_product(self):
-        """TODO"""
+        """Tests for api_retrieve_single_product view"""
         url = reverse("marketplace:api_view_single_product", args=["1"])
         allowed_http_methods = ["HEAD", "GET"]
         forbidden_http_methods = ["POST", "TRACE", "OPTIONS", "PUT", "PATCH", "DELETE"]
@@ -242,7 +243,7 @@ class MarketplaceViewTestCase(TransactionTestCase):
         self._check_http_allowed(url, allowed_http_methods)
 
     def test_view_api_retrieve_cart(self):
-        """TODO"""
+        """Tests for api_retrieve_cart view"""
         url = reverse("marketplace:api_view_cart")
         allowed_http_methods = ["HEAD", "GET"]
         forbidden_http_methods = ["POST", "TRACE", "OPTIONS", "PUT", "PATCH", "DELETE"]
@@ -251,7 +252,7 @@ class MarketplaceViewTestCase(TransactionTestCase):
         self._check_http_allowed(url, allowed_http_methods)
 
     def test_view_api_add_to_cart(self):
-        """TODO"""
+        """Tests for api_add_to_cart view"""
         url = reverse("marketplace:api_add_to_cart", args=["1"])
         allowed_http_methods = ["HEAD", "GET", "POST"]
         forbidden_http_methods = ["TRACE", "OPTIONS", "PUT", "PATCH", "DELETE"]
@@ -260,7 +261,7 @@ class MarketplaceViewTestCase(TransactionTestCase):
         self._check_http_allowed(url, allowed_http_methods)
 
     def test_view_api_update_cart_entry(self):
-        """TODO"""
+        """Tests for api_update_cart_entry view"""
         url = reverse("marketplace:api_update_cart_entry", args=["1"])
         allowed_http_methods = ["HEAD", "GET", "POST"]
         forbidden_http_methods = ["TRACE", "OPTIONS", "PUT", "PATCH", "DELETE"]
@@ -269,7 +270,7 @@ class MarketplaceViewTestCase(TransactionTestCase):
         self._check_http_allowed(url, allowed_http_methods)
 
     def test_view_api_checkout_cart_entry(self):
-        """TODO"""
+        """Tests for api_checkout_cart_entry view"""
         url = reverse("marketplace:api_checkout_cart_entry", args=["1"])
         allowed_http_methods = ["POST"]
         forbidden_http_methods = ["HEAD", "GET", "TRACE", "OPTIONS", "PUT", "PATCH", "DELETE"]
@@ -278,7 +279,7 @@ class MarketplaceViewTestCase(TransactionTestCase):
         self._check_http_allowed(url, allowed_http_methods)
 
     def test_api_checkout_cart(self):
-        """TODO"""
+        """Tests for api_checkout_cart view"""
         url = reverse("marketplace:api_checkout_cart")
         allowed_http_methods = ["POST"]
         forbidden_http_methods = ["HEAD", "GET", "TRACE", "OPTIONS", "PUT", "PATCH", "DELETE"]
@@ -287,6 +288,8 @@ class MarketplaceViewTestCase(TransactionTestCase):
         self._check_http_allowed(url, allowed_http_methods)
 
     def _check_http_not_allowed(self, target_url, forbidden_http_methods):
+        """This method iterates over a list of HTTP methods and verifies if a
+        request to the target URL returns a status code of 403"""
         for method in forbidden_http_methods:
             http_request_function = self.http_request_functions[method]
             response = http_request_function(target_url)
@@ -294,6 +297,8 @@ class MarketplaceViewTestCase(TransactionTestCase):
                 self.assertEqual(response.status_code, 405)
 
     def _check_http_allowed(self, target_url, allowed_http_methods):
+        """This method iterates over a list of HTTP methods and verifies if a
+        request to the target URL returns a status code different from 403"""
         for method in allowed_http_methods:
             http_request_function = self.http_request_functions[method]
             response = http_request_function(target_url)

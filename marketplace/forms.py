@@ -5,39 +5,37 @@ from .models import MarketplaceUser, Product, CartEntry
 
 
 class CustomUserCreationForm(UserCreationForm):
-    """TODO
-
-    """
-
+    """Form class to create new accounts on our website"""
     class Meta:
         model = MarketplaceUser
         fields = ("username", "email")
 
 
 class CustomUserChangeForm(UserChangeForm):
-    """TODO
-
-    """
-
+    """Form class to update current users of our website"""
     class Meta:
         model = MarketplaceUser
         fields = ("username", "email")
 
 
 class ProductAddForm(forms.ModelForm):
-    """TODO"""
+    """Form class to add new products to the marketplace
+
+    Not implemented"""
     class Meta:
         model = Product
         fields = ("title", "price", "inventory_count", "category", "description", "seller")
 
 
 class ProductEditForm(forms.ModelForm):
-    """TODO"""
+    """Form class to modify product inventory on the marketplace
+
+    Not implemented"""
     pass
 
 
 class CartEntryAddForm(forms.ModelForm):
-    """TODO"""
+    """Form class to add a product to personal cart"""
     product_count = forms.IntegerField(min_value=0)
 
     class Meta:
@@ -50,7 +48,7 @@ class CartEntryAddForm(forms.ModelForm):
         print(self)
 
     def clean_product_count(self):
-        """TODO"""
+        """Validates data before saving form values"""
         data = self.cleaned_data["product_count"]
 
         # In addition to checking whether the amount added to cart is valid, we should also
@@ -62,7 +60,7 @@ class CartEntryAddForm(forms.ModelForm):
 
 
 class CartEntryUpdateForm(forms.ModelForm):
-    """TODO"""
+    """Form class to update a cart entry"""
     product_count = forms.IntegerField(min_value=0)
 
     class Meta:
@@ -77,10 +75,7 @@ class CartEntryUpdateForm(forms.ModelForm):
 
     def clean_product_count(self):
         """Similar to creating cart entry, we do not allow invalid parameters
-        to be passed in this form.
-
-        :return:
-        """
+        to be passed in this form."""
         data = self.cleaned_data["product_count"]
 
         if data <= 0:
