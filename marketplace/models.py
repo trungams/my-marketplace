@@ -1,9 +1,11 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models, transaction
-from django.db.models.signals import post_save, pre_delete
+from django.db.models.signals import pre_save, post_save, pre_delete
 from django.dispatch import receiver
-from django.core.exceptions import ValidationError
 from django.shortcuts import reverse
+import warnings
+
+from .exceptions import ProductNotAvailableException, ItemLeftInCartWarning
 
 # Create your models here.
 
@@ -13,7 +15,7 @@ class MarketplaceUser(AbstractUser):
     really adding any new fields to AbstractUser for now, but this gives us the
     option to extend this model later on.
     """
-    email = models.EmailField(unique=True, max_length=80)
+    email = models.EmailField(unique=True, max_length=80, blank=False)
 
 
 class Product(models.Model):
@@ -60,9 +62,17 @@ class Cart(models.Model):
     @transaction.atomic
     def checkout_cart(cls, pk):
         """TODO"""
-        cart_entries = cls.objects.select_for_update().get(associated_cart__id=pk)
+        cart_entries = CartEntry.objects.select_for_update().filter(associated_cart__id=pk)
+        item_left = False
 
-        map(CartEntry.checkout_entry, cart_entries)
+        for entry in cart_entries:
+            try:
+                CartEntry.checkout_entry(entry.id)
+            except ProductNotAvailableException:
+                item_left = True
+
+        if item_left:
+            warnings.warn("There are items not checked out", ItemLeftInCartWarning)
 
     def __str__(self):
         return f"{self.user}'s cart. There are {self.item_count} items and total cost is {self.total_cost}"
@@ -112,7 +122,7 @@ class CartEntry(models.Model):
         cart_entry = cls.objects.select_for_update().get(pk=pk)
 
         if cart_entry.product.inventory_count < cart_entry.product_count:
-            raise ValueError("There are not enough items in inventory.")
+            raise ProductNotAvailableException("There are not enough items in inventory.")
         cart_entry.product.inventory_count -= cart_entry.product_count
 
         cart_entry.product.save()
@@ -136,39 +146,53 @@ def create_default_cart_for_new_user(sender, instance, **kwargs):
         new_cart.save()
 
 
+@receiver(pre_save, sender=CartEntry)
+@transaction.atomic
+def update_cart_entry(sender, instance, **kwargs):
+    """If a cart entry information is updated, we should update the cart's info
+    as well"""
+    try:
+        current_cart_entry = CartEntry.objects.select_for_update().get(pk=instance.id)
+
+        prev_product_count = current_cart_entry.product_count
+        prev_cost = current_cart_entry.cost
+
+        instance.associated_cart.item_count -= prev_product_count
+        instance.associated_cart.total_cost -= prev_cost
+
+        instance.associated_cart.save()
+    except CartEntry.DoesNotExist:
+        pass
+
+
 @receiver(post_save, sender=CartEntry)
+@transaction.atomic
 def add_entry_to_cart(sender, instance, **kwargs):
     """Whenever a CartEntry instance is created, we update the information in
-    the associated cart, i.e total item count, and total cost.
+    the associated cart, i.e total item count, and total cost."""
 
-    :param sender:
-    :param instance:
-    :param kwargs:
-    :return:
-    """
     # This is to avoid possible race condition. During the process of checking whether
     # a product is available. The product's true amount might have been decreased without
     # the controller process knowing.
-    if instance.product.inventory_count < 0:
-        raise ValidationError("There are not enough items in inventory.")
-    else:
-        instance.associated_cart.total_cost += instance.cost
-        instance.associated_cart.item_count += instance.product_count
+    cart = Cart.objects.select_for_update().get(id=instance.associated_cart.id)
 
-        instance.associated_cart.save()
+    if instance.product.inventory_count < 0:
+        raise ProductNotAvailableException("There are not enough items in inventory.")
+    else:
+        cart.total_cost += instance.cost
+        cart.item_count += instance.product_count
+
+        cart.save()
 
 
 @receiver(pre_delete, sender=CartEntry)
+@transaction.atomic
 def remove_entry_from_cart(sender, instance, **kwargs):
     """Whenever a CartEntry instance is removed, we update the information in
-    the associated cart, i.e total item count, and total cost.
+    the associated cart, i.e total item count, and total cost."""
+    cart = Cart.objects.select_for_update().get(id=instance.associated_cart.id)
 
-    :param sender:
-    :param instance:
-    :param kwargs:
-    :return:
-    """
-    instance.associated_cart.total_cost -= instance.cost
-    instance.associated_cart.item_count -= instance.product_count
+    cart.total_cost -= instance.cost
+    cart.item_count -= instance.product_count
 
-    instance.associated_cart.save()
+    cart.save()

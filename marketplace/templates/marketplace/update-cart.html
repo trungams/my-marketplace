@@ -14,5 +14,10 @@
     <input type="hidden" name="_method" value="delete">
     <button>Remove item from cart</button>
 </form>
+<form action="{% url 'marketplace:api_checkout_cart_entry' cart_entry_id %}" method="post">
+    {% csrf_token %}
+    <input type="hidden">
+    <button>Checkout item</button>
+</form>
 Price is {{ price }} per item. There are {{ available }} items left in inventory.
 {% endblock %}

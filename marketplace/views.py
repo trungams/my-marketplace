@@ -2,8 +2,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import (
     HttpResponse, HttpResponseNotAllowed, HttpResponseForbidden, JsonResponse
 )
-from django.forms.models import model_to_dict
 from django.contrib.auth.decorators import login_required
+from django.db.utils import IntegrityError
 
 from .models import *
 from .forms import *
@@ -162,9 +162,9 @@ def api_add_to_cart(request, pk):
             else:
                 ctx["success"] = False
                 ctx["message"] = "Invalid form data!"
-        except ValidationError:
+        except (ValidationError, IntegrityError, ProductNotAvailableException):
             ctx["success"] = False
-            ctx["message"] = "Invalid form data!"
+            ctx["message"] = "Invalid data or cart entry already exists!"
 
         return JsonResponse(ctx)
     else:
@@ -185,7 +185,7 @@ def api_update_cart_entry(request, pk):
         form = CartEntryUpdateForm(instance=current_cart_entry)
 
         ctx["form"] = form
-        ctx["cart_id"] = current_cart_entry.id
+        ctx["cart_entry_id"] = current_cart_entry.id
         ctx["product"] = current_product.title
         ctx["available"] = current_product.inventory_count
         ctx["price"] = current_product.price
@@ -210,7 +210,7 @@ def api_update_cart_entry(request, pk):
             else:
                 ctx["success"] = False
                 ctx["message"] = "Invalid form data!"
-        except ValidationError:
+        except (ValidationError, ProductNotAvailableException):
             ctx["success"] = False
             ctx["message"] = "Invalid form data!"
 
@@ -245,7 +245,7 @@ def api_checkout_cart_entry(request, pk):
 def api_checkout_cart(request):
     """TODO"""
     if request.method == "POST":
-        current_cart = Cart.objects.get_or_create(user=request.user)
+        current_cart, created = Cart.objects.get_or_create(user=request.user)
 
         ctx = {}
 

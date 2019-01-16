@@ -24,5 +24,10 @@
     <li><a href="{% url 'marketplace:api_add_to_cart' 1 %}">Add first product to cart</a></li>
     <li><a href="{% url 'marketplace:api_update_cart_entry' 6 %}">Update your first cart entry here</a></li>
 </ul>
+<form action="{% url 'marketplace:api_checkout_cart' %}" method="post">
+    {% csrf_token %}
+    <input type="hidden">
+    <button type="submit">Checkout your cart</button>
+</form>
 
 {% endblock %}
