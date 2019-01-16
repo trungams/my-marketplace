@@ -11,6 +11,6 @@ before_script:
     - pipenv run python manage.py makemigrations
     - pipenv run python manage.py migrate
 script:
-    - pipenv run manage.py test
+    - pipenv run python manage.py test
 notifications:
     email: false
