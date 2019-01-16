@@ -1,0 +1,17 @@
+dist: trusty
+sudo: true
+language: python
+python:
+    - "3.6"
+install:
+    - pip install --upgrade pip
+    - pip install pipenv
+    - pipenv install --system --skiplock
+before_script:
+    - pipenv shell
+    - python manage.py makemigrations
+    - python manage.py migrate
+script:
+    - manage.py test
+notifications:
+    email: false
