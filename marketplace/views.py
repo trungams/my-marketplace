@@ -3,7 +3,6 @@ from django.http import (
     HttpResponse, HttpResponseNotAllowed, HttpResponseForbidden, JsonResponse
 )
 from django.contrib.auth.decorators import login_required
-from django.db.utils import IntegrityError
 
 from .models import *
 from .forms import *
@@ -21,11 +20,12 @@ def register(request):
 
     Supported HTTP methods: GET, POST
     """
+    HTTP_METHODS_SUPPORTED = ["HEAD", "GET", "POST"]
 
     if request.user.is_authenticated:
         # Registered users don't need to access this page
-        return redirect("index")
-    if request.method == "GET":
+        return redirect("marketplace:index")
+    if request.method in ["GET", "HEAD"]:
         form = CustomUserCreationForm()
         return render(request, "registration/register.html", {"form": form})
     elif request.method == "POST":
@@ -36,7 +36,7 @@ def register(request):
         # Returns to register site in case of error
         return redirect("register")
     else:
-        return HttpResponseNotAllowed(request)
+        return HttpResponseNotAllowed(HTTP_METHODS_SUPPORTED)
 
 
 def api_retrieve_products(request):
@@ -49,8 +49,10 @@ def api_retrieve_products(request):
         category: Search based on products' category
         availability (true/false): Search based on products' availability
     """
-    if request.method != "GET":
-        return HttpResponseNotAllowed(request)
+    HTTP_METHODS_SUPPORTED = ["HEAD", "GET"]
+
+    if request.method not in ["GET", "HEAD"]:
+        return HttpResponseNotAllowed(HTTP_METHODS_SUPPORTED)
     else:
         ctx = {}
 
@@ -88,8 +90,10 @@ def api_retrieve_single_product(request, pk):
 
     Supported HTTP methods: GET
     """
-    if request.method != "GET":
-        return HttpResponseNotAllowed(request)
+    HTTP_METHODS_SUPPORTED = ["HEAD", "GET"]
+
+    if request.method not in ["GET", "HEAD"]:
+        return HttpResponseNotAllowed(HTTP_METHODS_SUPPORTED)
     else:
         ctx = {}
 
@@ -100,7 +104,10 @@ def api_retrieve_single_product(request, pk):
         ctx["availability"] = current_product.inventory_count
         ctx["category"] = current_product.category
         ctx["description"] = current_product.description
-        ctx["seller"] = current_product.seller.username
+        if current_product.seller:
+            ctx["seller"] = current_product.seller.username
+        else:
+            ctx["seller"] = None
 
         return JsonResponse(ctx)
 
@@ -111,8 +118,10 @@ def api_retrieve_cart(request):
 
     Supported HTTP methods: GET
     """
-    if request.method != "GET":
-        return HttpResponseNotAllowed(request)
+    HTTP_METHODS_SUPPORTED = ["HEAD", "GET"]
+
+    if request.method not in ["GET", "HEAD"]:
+        return HttpResponseNotAllowed(HTTP_METHODS_SUPPORTED)
     else:
         ctx = {}
 
@@ -145,11 +154,13 @@ def api_add_to_cart(request, pk):
     :param request: Current request
     :param pk: Product's ID
     """
+    HTTP_METHODS_SUPPORTED = ["HEAD", "GET", "POST"]
+
     current_product = get_object_or_404(Product, pk=pk)
 
     ctx = {}
 
-    if request.method == "GET":
+    if request.method in ["GET", "HEAD"]:
         # Render form with CSRF token
         form = CartEntryAddForm()
 
@@ -188,7 +199,7 @@ def api_add_to_cart(request, pk):
 
         return JsonResponse(ctx)
     else:
-        return HttpResponseNotAllowed(request)
+        return HttpResponseNotAllowed(HTTP_METHODS_SUPPORTED)
 
 
 @login_required()
@@ -200,6 +211,8 @@ def api_update_cart_entry(request, pk):
     :param request: Current request
     :param pk: Cart entry's ID
     """
+    HTTP_METHODS_SUPPORTED = ["HEAD", "GET", "POST"]
+
     current_cart_entry = get_object_or_404(CartEntry, pk=pk)
     current_product = current_cart_entry.product
 
@@ -208,7 +221,7 @@ def api_update_cart_entry(request, pk):
     if request.user != current_cart_entry.associated_cart.user:
         # An outsider should not manipulate other people's carts
         return HttpResponseForbidden(request)
-    if request.method == "GET":
+    if request.method in ["GET", "HEAD"]:
         # Render form with CSRF token
         form = CartEntryUpdateForm(instance=current_cart_entry)
 
@@ -245,7 +258,7 @@ def api_update_cart_entry(request, pk):
 
         return JsonResponse(ctx)
     else:
-        return HttpResponseNotAllowed(request)
+        return HttpResponseNotAllowed(HTTP_METHODS_SUPPORTED)
 
 
 @login_required()
@@ -257,6 +270,8 @@ def api_checkout_cart_entry(request, pk):
     :param request: Current request
     :param pk: Cart entry's ID
     """
+    HTTP_METHODS_SUPPORTED = ["POST"]
+
     if request.method == "POST":
         current_cart_entry = get_object_or_404(CartEntry, pk=pk)
 
@@ -273,7 +288,7 @@ def api_checkout_cart_entry(request, pk):
 
             return JsonResponse(ctx)
     else:
-        return HttpResponseNotAllowed(request)
+        return HttpResponseNotAllowed(HTTP_METHODS_SUPPORTED)
 
 
 @login_required()
@@ -284,6 +299,8 @@ def api_checkout_cart(request):
 
     :param request: Current request
     """
+    HTTP_METHODS_SUPPORTED = ["POST"]
+
     if request.method == "POST":
         current_cart, created = Cart.objects.get_or_create(user=request.user)
 
@@ -297,16 +314,18 @@ def api_checkout_cart(request):
 
         return JsonResponse(ctx)
     else:
-        return HttpResponseNotAllowed(request)
+        return HttpResponseNotAllowed(HTTP_METHODS_SUPPORTED)
 
 
 @login_required()
 def update_inventory(request):
     """API view to update inventory"""
-    if request.method == "GET":
+    HTTP_METHODS_SUPPORTED = ["HEAD", "GET", "POST"]
+
+    if request.method in ["GET", "HEAD"]:
         # TODO: render a template with form to modify inventory
-        return HttpResponseNotAllowed(request)
+        return HttpResponseNotAllowed(HTTP_METHODS_SUPPORTED)
     elif request.method == "POST":
         return HttpResponse(request, status=204)
     else:
-        return HttpResponseNotAllowed(request)
+        return HttpResponseNotAllowed(HTTP_METHODS_SUPPORTED)

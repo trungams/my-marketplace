@@ -10,15 +10,15 @@ class MarketplaceModelsTestCase(TestCase):
     """
     @classmethod
     def setUpTestData(cls):
-        # Create a single user, an empty cart should to be there by default
+        # Create two users, empty carts should to be there by default
         MarketplaceUser.objects.create_user(
             username="test01",
-            email="test01@mymarketplace.com"
+            email="test01@mymarketplace.com",
         )
 
         MarketplaceUser.objects.create_user(
             username="test02",
-            email="test02@mymarketplace.com"
+            email="test02@mymarketplace.com",
         )
 
     def setUp(self):

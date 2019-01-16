@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models, transaction
 from django.db.models.signals import pre_save, post_save, pre_delete
+from django.db.utils import IntegrityError
 from django.dispatch import receiver
 from django.shortcuts import reverse
 import warnings
@@ -166,8 +167,11 @@ def create_default_cart_for_new_user(sender, instance, **kwargs):
     """Whenever a new account is registered on our website. A cart will be auto
      created for that user"""
     if instance:
-        new_cart = Cart(user=instance)
-        new_cart.save()
+        try:
+            new_cart = Cart(user=instance)
+            new_cart.save()
+        except IntegrityError:
+            pass
 
 
 @receiver(pre_save, sender=CartEntry)
