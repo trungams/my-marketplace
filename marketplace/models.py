@@ -43,6 +43,21 @@ class Product(models.Model):
     description = models.TextField(default="", null=True, blank=True)
     seller = models.ForeignKey(MarketplaceUser, on_delete=models.CASCADE, default=None, null=True)
 
+    @classmethod
+    @transaction.atomic
+    def checkout_product(cls, pk):
+        """Performs checkout on a single product. Only one item of product is
+        checked out to user.
+
+        :raises ProductNotAvailableException
+        """
+        product = cls.objects.select_for_update().get(pk=pk)
+
+        if product.inventory_count <= 0:
+            raise ProductNotAvailableException("There are not enough items in inventory.")
+        product.inventory_count -= 1
+        product.save()
+
     def get_url_view_single_product(self):
         """Returns the URL to view this product details"""
         return reverse("marketplace:api_view_single_product", args=[str(self.id)])
@@ -78,7 +93,10 @@ class Cart(models.Model):
         insufficient supply.
 
         This static method is decorated with transaction.atomic to prevent any
-        possible race condition"""
+        possible race condition
+
+        :raises ItemLeftInCartWarning
+        """
         cart_entries = CartEntry.objects.select_for_update().filter(associated_cart__id=pk)
         item_left = False
 
@@ -134,10 +152,14 @@ class CartEntry(models.Model):
     @classmethod
     @transaction.atomic
     def checkout_entry(cls, pk):
-        """Performs a checkout for this cart entry only. Update
+        """Performs a checkout for this cart entry only. Update related product
+        information afterwards
 
         This static method is decorated with transaction.atomic to prevent any
-        possible race condition"""
+        possible race condition
+
+        :raises ProductNotAvailableException
+        """
         cart_entry = cls.objects.select_for_update().get(pk=pk)
 
         if cart_entry.product.inventory_count < cart_entry.product_count:
@@ -201,7 +223,10 @@ def update_cart_entry(sender, instance, **kwargs):
 @transaction.atomic
 def add_entry_to_cart(sender, instance, **kwargs):
     """Whenever a CartEntry instance is created, we update the information in
-    the associated cart, i.e total item count, and total cost."""
+    the associated cart, i.e total item count, and total cost.
+
+    :raises ProductNotAvailableException
+    """
 
     # This is to avoid possible race condition. During the process of checking whether
     # a product is available. The product's true amount might have been decreased without

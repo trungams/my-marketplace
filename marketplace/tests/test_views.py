@@ -269,6 +269,15 @@ class MarketplaceViewTestCase(TransactionTestCase):
         self._check_http_not_allowed(url, forbidden_http_methods)
         self._check_http_allowed(url, allowed_http_methods)
 
+    def test_view_api_checkout_product(self):
+        """Tests for api_checkout_product view"""
+        url = reverse("marketplace:api_checkout_product", args=["1"])
+        allowed_http_methods = ["POST"]
+        forbidden_http_methods = ["HEAD", "GET", "TRACE", "OPTIONS", "PUT", "PATCH", "DELETE"]
+
+        self._check_http_not_allowed(url, forbidden_http_methods)
+        self._check_http_allowed(url, allowed_http_methods)
+
     def test_view_api_checkout_cart_entry(self):
         """Tests for api_checkout_cart_entry view"""
         url = reverse("marketplace:api_checkout_cart_entry", args=["1"])

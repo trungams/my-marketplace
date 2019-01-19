@@ -140,6 +140,26 @@ class MarketplaceModelsTestCase(TestCase):
 
         self.assertEqual(test_02_associated_cart.item_count, 13)
 
+    def test_checkout_product(self):
+        """Check that product checkout works as expected"""
+        candy_product = Product.objects.get(title="Candy")
+
+        # Inventory count should be decremented after each checkout
+        Product.checkout_product(candy_product.id)
+        candy_product.refresh_from_db()
+        self.assertEqual(candy_product.inventory_count, 9)
+
+        # Verify that exceptions are raised properly
+        for _ in range(9):
+            Product.checkout_product(candy_product.id)
+        candy_product.refresh_from_db()
+        self.assertEqual(candy_product.inventory_count, 0)
+        self.assertRaises(
+            ProductNotAvailableException,
+            Product.checkout_product,
+            candy_product.id
+        )
+
     def test_checkout_cart_entry(self):
         """Check that relevant information is updated for each cart entry checkout"""
         test_01_associated_cart = Cart.objects.get(user__username="test01")

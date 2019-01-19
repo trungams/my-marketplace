@@ -3,6 +3,7 @@ from django.http import (
     HttpResponse, HttpResponseNotAllowed, HttpResponseForbidden, JsonResponse
 )
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_exempt
 
 from .models import *
 from .forms import *
@@ -261,6 +262,35 @@ def api_update_cart_entry(request, pk):
         return HttpResponseNotAllowed(HTTP_METHODS_SUPPORTED)
 
 
+@csrf_exempt
+def api_checkout_product(request, pk):
+    """API view to checkout one product, does not require users to be logged in
+    for simplicity. But any constraint can be added later.
+
+    Supported HTTP methods: POST
+
+    :param request: Current request
+    :param pk: Product's unique ID
+    """
+    HTTP_METHODS_SUPPORTED = ["POST"]
+
+    if request.method == "POST":
+        current_product = get_object_or_404(Product, pk=pk)
+
+        ctx = {}
+
+        try:
+            Product.checkout_product(pk=current_product.id)
+            ctx["success"] = True
+        except ProductNotAvailableException:
+            ctx["success"] = False
+            ctx["message"] = "Current product is not available!"
+
+        return JsonResponse(ctx)
+    else:
+        return HttpResponseNotAllowed(HTTP_METHODS_SUPPORTED)
+
+
 @login_required()
 def api_checkout_cart_entry(request, pk):
     """API view to checkout a cart entry
@@ -283,7 +313,7 @@ def api_checkout_cart_entry(request, pk):
             try:
                 CartEntry.checkout_entry(pk=pk)
                 ctx["success"] = True
-            except ValueError:
+            except ProductNotAvailableException:
                 ctx["success"] = False
 
             return JsonResponse(ctx)
@@ -309,7 +339,7 @@ def api_checkout_cart(request):
         try:
             Cart.checkout_cart(pk=current_cart.id)
             ctx["success"] = True
-        except ValueError:
+        except ProductNotAvailableException:
             ctx["success"] = False
 
         return JsonResponse(ctx)
