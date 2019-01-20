@@ -2,17 +2,66 @@
 
 My API design of an online marketplace. For Shopify application
 
+
 ## The framework
 
-Since web API is not my true forte, I chose Django, a framework that I'm more used to, which incidently simplifies quite a few steps in the development process. I could choose to go RESTful but I also took advantage of the Model View Template pattern of Django. So in addition to return pure data, some of my endpoints may give Html files as responses.
+Since web API is not my true forte, I chose Django, a Python web framework that I'm more used to, which incidently simplifies quite a few steps in the development process. I could choose to go RESTful but I also took advantage of the Model View Template pattern of Django. So in addition to return pure data, some of my endpoints may give Html files as responses.
+
 
 ## Installation and running the site locally
 
+I'm using Pipenv to manage packages and virtual environment. To install pipenv, run the following commands:
+
+```bash
+# To install pip
+curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+python get-pip.py
+pip install --upgrade pip
+
+# To install pipenv
+pip install pipenv
+```
+
+Please follow these steps in order to get the project up and running on your localhost:
+
+```bash
+# To install dependencies
+pipenv install
+
+# Activate pipenv shell, your command prompt will then look like '(my-marketplace) <original prompt>'
+pipenv shell
+
+# To set up and populate the database with some dummy entries
+python manage.py makemigrations
+python manage.py migrate
+python initdb.py
+
+# To run the server
+python manage.py runserver
+```
+
+Go to http://localhost:8000/, and you will see the index page, or send HTTP requests to the URLs mentioned [below](#the-api)
+
+
 ## My design
+
+My marketplace is built around 4 main models, and has 12 endpoints in total. I will discuss the model design and some basic logic under the hood in this section.
+
+### Models
+
+- Product
+  - The most important model of this marketplace. Each product in database represents one type of goods sold on my marketplace in real life. Each product entry in the database includes product id, title, price, inventory_count, category, description, and the seller, who is also a user of the website. A product can be checked out.
+- User
+  - This model represents a user of the website, who can log in, log out, query a product and add a product to their personal shopping cart, and can check out a shopping cart.
+- Cart
+  - Represents a shopping cart. A cart can only belong to one user and vice versa. A cart will store information of the number of items in cart, and the total cost. A cart can be checked out, decreasing the inventory count of related products if the transaction is successful.
+- CartEntry
+  - Represents a connection between a product and a specific cart. A cart can have multiple entries, which stand for one type of product on marketplace. For example, there are a dozen eggs and 2 tomatoes in my shopping cart. The eggs and tomatoes make 2 entries in the cart, with the item count of 12 and 2, respectively. A cart entry can be checked out separately.
+
 
 ## The API
 
-I decided to do some extra work because it makes the logic of my API clearer. In summary, these endpoints are supported:
+I decided to do some extra work and add carts and user authentication because it makes the logic of my API clearer. In summary, these endpoints are supported:
 
 - / or /marketplace
   - Endpoint name: Index
@@ -87,6 +136,8 @@ I decided to do some extra work because it makes the logic of my API clearer. In
   - What it does:
     - POST: Checks out a cart by iterating through all cart entries and performs a checkout on every entry. Throws a warning on unsuccessful entry checkout
 
+
 ## What I did
+
 
 ## A few things I have learned over the past week
