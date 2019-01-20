@@ -61,6 +61,12 @@ python manage.py runserver
 
 Go to http://localhost:8000/, and you will see the index page, or send HTTP requests to the URLs mentioned [below](#the-api)
 
+The database will have some products, as well as 2 user accounts. If you decide to test the cart functions (which requires a logged in user), you can use the following credentials:
+- User: test01. Password: 01test
+- User: test02. Password: 02test
+
+For logging in, I suggest you go to the index page and navigate to the login page, it is much simpler to do on the front-end.
+
 
 ## My design
 
@@ -189,3 +195,4 @@ I decided to do some extra work and add carts and user authentication because it
 - Some concurrency problem I learned in my Operating Systems class turned out to be very helpful.
 - I almost caused a huge bug because I did not authenticate users carefully.
 - I'm glad that I'm able to finish this. Thank you for the challenge!
+

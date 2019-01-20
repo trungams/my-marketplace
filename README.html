@@ -59,6 +59,12 @@ python initdb.py
 python manage.py runserver
 </code></pre>
 <p>Go to <a href="http://localhost:8000/">http://localhost:8000/</a>, and you will see the index page, or send HTTP requests to the URLs mentioned <a href="#the-api">below</a></p>
+<p>The database will have some products, as well as 2 user accounts. If you decide to test the cart functions (which requires a logged in user), you can use the following credentials:</p>
+<ul>
+<li>User: test01. Password: 01test</li>
+<li>User: test02. Password: 02test</li>
+</ul>
+<p>For logging in, I suggest you go to the index page and navigate to the login page, it is much simpler to do on the front-end.</p>
 <h2 id="my-design">My design</h2>
 <p>My marketplace is built around 4 main models, and has 12 endpoints in total. I will discuss the model design and some basic logic under the hood in this section.</p>
 <h3 id="models">Models</h3>
