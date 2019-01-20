@@ -35,14 +35,13 @@
 <h2 id="the-framework">The framework</h2>
 <p>Since web API is not my true forte, I chose Django, a Python web framework that I’m more used to, which incidently simplifies quite a few steps in the development process. I could choose to go RESTful but I also took advantage of the Model View Template pattern of Django. So in addition to return pure data, some of my endpoints may give Html files as responses.</p>
 <h2 id="installation-and-running-the-site-locally">Installation and running the site locally</h2>
-<p>I’m using Pipenv to manage packages and virtual environment. To install pipenv, run the following commands:</p>
+<p>The computer I’m using to develop this API is running Ubuntu 18.04. I’m using Pipenv to manage packages and virtual environment. To install pipenv, run the following commands:</p>
 <pre class=" language-bash"><code class="prism  language-bash"><span class="token comment"># To install pip</span>
 curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
-python get-pip.py
-pip <span class="token function">install</span> --upgrade pip
+<span class="token function">sudo</span> python3 get-pip.py
 
 <span class="token comment"># To install pipenv</span>
-pip <span class="token function">install</span> pipenv
+<span class="token function">sudo</span> pip <span class="token function">install</span> pipenv
 </code></pre>
 <p>Please follow these steps in order to get the project up and running on your localhost:</p>
 <pre class=" language-bash"><code class="prism  language-bash"><span class="token comment"># To install dependencies</span>

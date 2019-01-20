@@ -30,16 +30,15 @@ Since web API is not my true forte, I chose Django, a Python web framework that 
 
 ## Installation and running the site locally
 
-I'm using Pipenv to manage packages and virtual environment. To install pipenv, run the following commands:
+The computer I'm using to develop this API is running Ubuntu 18.04. I'm using Pipenv to manage packages and virtual environment. To install pipenv, run the following commands:
 
 ```bash
 # To install pip
 curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
-python get-pip.py
-pip install --upgrade pip
+sudo python3 get-pip.py
 
 # To install pipenv
-pip install pipenv
+sudo pip install pipenv
 ```
 
 Please follow these steps in order to get the project up and running on your localhost:
