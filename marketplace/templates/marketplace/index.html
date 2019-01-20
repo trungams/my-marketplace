@@ -3,6 +3,7 @@
 {% block title %}Homepage{% endblock %}
 
 {% block content %}
+
 {% if user.is_authenticated %}
     <p>Hello, {{ user.username }}</p>
     <p><a href="{% url 'logout' %}">Logout</a></p>
@@ -12,17 +13,10 @@
     <a href="{% url 'register' %}">Register</a>
 {% endif %}
 <p>Choose an action on marketplace</p>
-<ul>User view
-    <li>Random</li>
-</ul>
-<ul>API
+<p>Here are some shortcuts to this website's API endpoints. For the full list of endpoints, please refer to README.md</p>
+<ul>
     <li><a href="{% url 'marketplace:api_view_products' %}">Browse all available products</a></li>
     <li><a href="{% url 'marketplace:api_view_cart' %}">View your cart</a></li>
-</ul>
-<ul>For single items
-    <li><a href="{% url 'marketplace:api_view_single_product' 1 %}">View the first product</a></li>
-    <li><a href="{% url 'marketplace:api_add_to_cart' 1 %}">Add first product to cart</a></li>
-    <li><a href="{% url 'marketplace:api_update_cart_entry' 6 %}">Update your first cart entry here</a></li>
 </ul>
 <form action="{% url 'marketplace:api_checkout_cart' %}" method="post">
     {% csrf_token %}
