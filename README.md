@@ -1,6 +1,24 @@
 # my-marketplace [![Build Status](https://travis-ci.com/trungams/my-marketplace.svg?token=ZLjfN4mmyQ4ZCqssRxs2&branch=master)](https://travis-ci.com/trungams/my-marketplace)
 
-My API design of an online marketplace. For Shopify application
+My API design of an online marketplace. For Shopify application.
+
+
+## Table of contents
+
+- [My submission](#my-submission)
+- [The framework](#the-framework)
+- [Installation and running the site locally](#installation-and-running-the-site-locally)
+- [My design](#my-design)
+- [The API](#the-api)
+  - [Easier-to-test endpoints](#easier-to-test-endpoints)
+  - [Endpoints that may require login or CSRF token](#endpoints-that-may-require-login-or-csrf-token)
+- [What I did](#what-i-did)
+- [Some notes](#some-notes)
+
+
+## My submission
+
+Even though I'm submitting via a zip file, you can view my entire work history on Github, including issues tracking and build status. Here is the link to the repo: https://github.com/trungams/my-marketplace. It is a private repo, so if you want to be able to access it, please send me an email at trung.vuongthien@mail.mcgill.ca with your Github username, I will add you as a collaborator.
 
 
 ## The framework
@@ -63,29 +81,46 @@ My marketplace is built around 4 main models, and has 12 endpoints in total. I w
 
 I decided to do some extra work and add carts and user authentication because it makes the logic of my API clearer. In summary, these endpoints are supported:
 
-- / or /marketplace
+### Easier-to-test endpoints
+- [/ or /marketplace](#-or-marketplace)
+- [/marketplace/api/products/view](#marketplaceapiproductsview)
+- [/marketplace/api/products/<product_id>/view](#marketplaceapiproductsproduct_idview)
+- [/marketplace/api/products/<product_id>/checkout](#marketplaceapiproductsproduct_idcheckout)
+
+### Endpoints that may require login or CSRF token
+
+- [/login](#login)
+- [/logout](#logout)
+- [/register](#register)
+- [/marketplace/api/products/<product_id>/add-to-cart](#marketplaceapiproductsproduct_idadd-to-cart)
+- [/marketplace/api/cart/view](#marketplaceapicartview)
+- [/marketplace/api/cart/<cart_entry>/update](#marketplaceapicartcart_entryupdate)
+- [/marketplace/api/cart/<cart_entry>/checkout](#marketplaceapicartcart_entrycheckout)
+- [/marketplace/api/cart/checkout](#marketplaceapicartcheckout)
+
+#### / or /marketplace
   - Endpoint name: Index
   - Supported HTTP methods: All
   - What it does: Returns the index page
-- /login
+#### /login
   - Endpoint name: Login
   - Supported HTTP methods: GET, POST
   - Restrictions: POST request requires a CSRF token
   - What it does:
     - GET: Returns a login form
     - POST: Sends a user's credentials to server for authentication. If valid, the user will be logged in
-- /logout
+#### /logout
   - Endpoint name: Logout
   - Supported HTTP methods: GET
   - What it does: Signs out a logged in user
-- /register
+#### /register
   - Endpoint name: Register
   - Supported HTTP methods: GET, POST
   - Restrictions: POST request requires a CSRF token
   - What it does:
     - GET: Returns a registration form
     - POST: Sends information to server to create a new account. If form data are valid, a new account will be created and can be used to login
-- /marketplace/api/products/view
+#### /marketplace/api/products/view
   - Endpoint name: View products
   - Supported HTTP methods: GET
   - What it does:
@@ -93,43 +128,43 @@ I decided to do some extra work and add carts and user authentication because it
       - product (string): search based on name of products.
       - category (string): search based on category of products.
       - availability (true/false): search based on products' availability. If the value is true, only products with inventory > 0 will be shown.
-- /marketplace/api/products/<product_id>/view
+#### /marketplace/api/products/<product_id>/view
   - Endpoint name: View specific product
   - Supported HTTP methods: GET
   - What it does:
     - GET: Retrieves information about a product with ID <product_id>. If such ID does not exist in the store, a 404 error code will be returned    
-- /marketplace/api/products/<product_id>/checkout
+#### /marketplace/api/products/<product_id>/checkout
   - Endpoint name: Purchase a product
   - Supported HTTP methods: POST
   - What it does:
     - POST: Decrease the inventory count of a product with ID <product_id> by 1, similar to a "purchase" in real life and returns the result of the purchase (success or not)
-- /marketplace/api/products/<product_id>/add-to-cart
+#### /marketplace/api/products/<product_id>/add-to-cart
   - Endpoint name: Add product to cart
   - Supported HTTP methods: GET, POST
   - Restrictions: User must be logged in. POST request requires a CSRF token
   - What it does:
     - GET: Returns a form to choose the number of items to add to cart
     - POST: Adds a number of items of a product to user's cart if form data are valid and returns the status of the action (success/fail)
-- /marketplace/api/cart/view
+#### /marketplace/api/cart/view
   - Endpoint name: View cart
   - Supported HTTP methods: GET
   - Restrictions: User must be logged in
   - What it does:
     - GET: Returns information about a user's cart including all cart entries
-- /marketplace/api/cart/<cart_entry>/update
+#### /marketplace/api/cart/<cart_entry>/update
   - Endpoint name: Update cart entry
   - Supported HTTP methods: GET, POST
   - Restrictions: User must be logged in. POST request requires a CSRF token
   - What it does:
     - GET: Returns a form to choose modify the number of items in a cart entry with ID <carty_entry>, if the ID is valid.
     - POST: Updates the corresponding cart entry if form data are valid
-- /marketplace/api/cart/<cart_entry>/checkout
+#### /marketplace/api/cart/<cart_entry>/checkout
   - Endpoint name: Checkout cart entry
   - Supported HTTP methods: POST
   - Restrictions: User must be logged in. POST request requires a CSRF token
   - What it does:
     - POST: Checks out a cart entry and update inventory of the product
-- /marketplace/api/cart/checkout
+#### /marketplace/api/cart/checkout
   - Endpoint name: Checkout cart
   - Supported HTTP methods: POST
   - Restrictions: User must be logged in. POST request requires a CSRF token
@@ -139,5 +174,17 @@ I decided to do some extra work and add carts and user authentication because it
 
 ## What I did
 
+- With the help of Django, I can set up a database quite quickly with all the defined fields and constraints. I then added some methods for each model class to simulate transaction and querying data.
+- I defined views (similar to controllers in an MVC pattern) as the backend logic of the website, which is responsible for authenticating users, evaluating requests and manipulating the database.
+- I tests for each model class and view function.
+- I tried to write comments (documentation style) for each class and function.
+- I added Continuous Integration to automatically run tests whenever I push to Github.
 
-## A few things I have learned over the past week
+
+## Some notes
+
+- Brainstorming, designing, implementing, testing is tiring.
+- Fixing bugs is tiring.
+- Some concurrency problem I learned in my Operating Systems class turned out to be very helpful.
+- I almost caused a huge bug because I did not authenticate users carefully.
+- I'm glad that I'm able to finish this. Thank you for the challenge!
