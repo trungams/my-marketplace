@@ -1,0 +1,256 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>README</title>
+  <link rel="stylesheet" href="https://stackedit.io/style.css" />
+</head>
+
+<body class="stackedit">
+  <div class="stackedit__html"><h1 id="my-marketplace-">my-marketplace <a href="https://travis-ci.com/trungams/my-marketplace"><img src="https://travis-ci.com/trungams/my-marketplace.svg?token=ZLjfN4mmyQ4ZCqssRxs2&amp;branch=master" alt="Build Status"></a></h1>
+<p>My API design of an online marketplace. For Shopify application.</p>
+<ul>
+<li>Name: Trung Vuong Thien</li>
+<li>Email: <a href="mailto:trung.vuongthien@mail.mcgill.ca">trung.vuongthien@mail.mcgill.ca</a></li>
+</ul>
+<h2 id="table-of-contents">Table of contents</h2>
+<ul>
+<li><a href="#my-submission">My submission</a></li>
+<li><a href="#the-framework">The framework</a></li>
+<li><a href="#installation-and-running-the-site-locally">Installation and running the site locally</a></li>
+<li><a href="#my-design">My design</a></li>
+<li><a href="#the-api">The API</a>
+<ul>
+<li><a href="#easier-to-test-endpoints">Easier-to-test endpoints</a></li>
+<li><a href="#endpoints-that-may-require-login-or-csrf-token">Endpoints that may require login or CSRF token</a></li>
+</ul>
+</li>
+<li><a href="#what-i-did">What I did</a></li>
+<li><a href="#some-notes">Some notes</a></li>
+</ul>
+<h2 id="my-submission">My submission</h2>
+<p>Even though I’m submitting via a zip file, you can view my entire work history on Github, including issues tracking and build status. Here is the link to the repo: <a href="https://github.com/trungams/my-marketplace">https://github.com/trungams/my-marketplace</a>. It is a private repo, so if you want to be able to access it, please send me an email at <a href="mailto:trung.vuongthien@mail.mcgill.ca">trung.vuongthien@mail.mcgill.ca</a> with your Github username, I will add you as a collaborator.</p>
+<h2 id="the-framework">The framework</h2>
+<p>Since web API is not my true forte, I chose Django, a Python web framework that I’m more used to, which incidently simplifies quite a few steps in the development process. I could choose to go RESTful but I also took advantage of the Model View Template pattern of Django. So in addition to return pure data, some of my endpoints may give Html files as responses.</p>
+<h2 id="installation-and-running-the-site-locally">Installation and running the site locally</h2>
+<p>I’m using Pipenv to manage packages and virtual environment. To install pipenv, run the following commands:</p>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token comment"># To install pip</span>
+curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+python get-pip.py
+pip <span class="token function">install</span> --upgrade pip
+
+<span class="token comment"># To install pipenv</span>
+pip <span class="token function">install</span> pipenv
+</code></pre>
+<p>Please follow these steps in order to get the project up and running on your localhost:</p>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token comment"># To install dependencies</span>
+pipenv <span class="token function">install</span>
+
+<span class="token comment"># Activate pipenv shell, your command prompt will then look like '(my-marketplace) &lt;original prompt&gt;'</span>
+pipenv shell
+
+<span class="token comment"># To set up and populate the database with some dummy entries</span>
+python manage.py makemigrations
+python manage.py migrate
+python initdb.py
+
+<span class="token comment"># To run the server</span>
+python manage.py runserver
+</code></pre>
+<p>Go to <a href="http://localhost:8000/">http://localhost:8000/</a>, and you will see the index page, or send HTTP requests to the URLs mentioned <a href="#the-api">below</a></p>
+<h2 id="my-design">My design</h2>
+<p>My marketplace is built around 4 main models, and has 12 endpoints in total. I will discuss the model design and some basic logic under the hood in this section.</p>
+<h3 id="models">Models</h3>
+<ul>
+<li>Product
+<ul>
+<li>The most important model of this marketplace. Each product in database represents one type of goods sold on my marketplace in real life. Each product entry in the database includes product id, title, price, inventory_count, category, description, and the seller, who is also a user of the website. A product can be checked out.</li>
+</ul>
+</li>
+<li>User
+<ul>
+<li>This model represents a user of the website, who can log in, log out, query a product and add a product to their personal shopping cart, and can check out a shopping cart.</li>
+</ul>
+</li>
+<li>Cart
+<ul>
+<li>Represents a shopping cart. A cart can only belong to one user and vice versa. A cart will store information of the number of items in cart, and the total cost. A cart can be checked out, decreasing the inventory count of related products if the transaction is successful.</li>
+</ul>
+</li>
+<li>CartEntry
+<ul>
+<li>Represents a connection between a product and a specific cart. A cart can have multiple entries, which stand for one type of product on marketplace. For example, there are a dozen eggs and 2 tomatoes in my shopping cart. The eggs and tomatoes make 2 entries in the cart, with the item count of 12 and 2, respectively. A cart entry can be checked out separately.</li>
+</ul>
+</li>
+</ul>
+<h2 id="the-api">The API</h2>
+<p>I decided to do some extra work and add carts and user authentication because it makes the logic of my API clearer. In summary, these endpoints are supported:</p>
+<h3 id="easier-to-test-endpoints">Easier-to-test endpoints</h3>
+<ul>
+<li><a href="#-or-marketplace">/ or /marketplace</a></li>
+<li><a href="#marketplaceapiproductsview">/marketplace/api/products/view</a></li>
+<li><a href="#marketplaceapiproductsproduct_idview">/marketplace/api/products/&lt;product_id&gt;/view</a></li>
+<li><a href="#marketplaceapiproductsproduct_idcheckout">/marketplace/api/products/&lt;product_id&gt;/checkout</a></li>
+</ul>
+<h3 id="endpoints-that-may-require-login-or-csrf-token">Endpoints that may require login or CSRF token</h3>
+<ul>
+<li><a href="#login">/login</a></li>
+<li><a href="#logout">/logout</a></li>
+<li><a href="#register">/register</a></li>
+<li><a href="#marketplaceapiproductsproduct_idadd-to-cart">/marketplace/api/products/&lt;product_id&gt;/add-to-cart</a></li>
+<li><a href="#marketplaceapicartview">/marketplace/api/cart/view</a></li>
+<li><a href="#marketplaceapicartcart_entryupdate">/marketplace/api/cart/&lt;cart_entry&gt;/update</a></li>
+<li><a href="#marketplaceapicartcart_entrycheckout">/marketplace/api/cart/&lt;cart_entry&gt;/checkout</a></li>
+<li><a href="#marketplaceapicartcheckout">/marketplace/api/cart/checkout</a></li>
+</ul>
+<h4 id="or-marketplace">/ or /marketplace</h4>
+<ul>
+<li>Endpoint name: Index</li>
+<li>Supported HTTP methods: All</li>
+<li>What it does: Returns the index page</li>
+</ul>
+<h4 id="login">/login</h4>
+<ul>
+<li>Endpoint name: Login</li>
+<li>Supported HTTP methods: GET, POST</li>
+<li>Restrictions: POST request requires a CSRF token</li>
+<li>What it does:
+<ul>
+<li>GET: Returns a login form</li>
+<li>POST: Sends a user’s credentials to server for authentication. If valid, the user will be logged in</li>
+</ul>
+</li>
+</ul>
+<h4 id="logout">/logout</h4>
+<ul>
+<li>Endpoint name: Logout</li>
+<li>Supported HTTP methods: GET</li>
+<li>What it does: Signs out a logged in user</li>
+</ul>
+<h4 id="register">/register</h4>
+<ul>
+<li>Endpoint name: Register</li>
+<li>Supported HTTP methods: GET, POST</li>
+<li>Restrictions: POST request requires a CSRF token</li>
+<li>What it does:
+<ul>
+<li>GET: Returns a registration form</li>
+<li>POST: Sends information to server to create a new account. If form data are valid, a new account will be created and can be used to login</li>
+</ul>
+</li>
+</ul>
+<h4 id="marketplaceapiproductsview">/marketplace/api/products/view</h4>
+<ul>
+<li>Endpoint name: View products</li>
+<li>Supported HTTP methods: GET</li>
+<li>What it does:
+<ul>
+<li>GET: Retrieves information about products on marketplace. Some GET parameters are supported to filter search results. Supported parameters are:
+<ul>
+<li>product (string): search based on name of products.</li>
+<li>category (string): search based on category of products.</li>
+<li>availability (true/false): search based on products’ availability. If the value is true, only products with inventory &gt; 0 will be shown.</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h4 id="marketplaceapiproductsproduct_idview">/marketplace/api/products/&lt;product_id&gt;/view</h4>
+<ul>
+<li>Endpoint name: View specific product</li>
+<li>Supported HTTP methods: GET</li>
+<li>What it does:
+<ul>
+<li>GET: Retrieves information about a product with ID &lt;product_id&gt;. If such ID does not exist in the store, a 404 error code will be returned</li>
+</ul>
+</li>
+</ul>
+<h4 id="marketplaceapiproductsproduct_idcheckout">/marketplace/api/products/&lt;product_id&gt;/checkout</h4>
+<ul>
+<li>Endpoint name: Purchase a product</li>
+<li>Supported HTTP methods: POST</li>
+<li>What it does:
+<ul>
+<li>POST: Decrease the inventory count of a product with ID &lt;product_id&gt; by 1, similar to a “purchase” in real life and returns the result of the purchase (success or not)</li>
+</ul>
+</li>
+</ul>
+<h4 id="marketplaceapiproductsproduct_idadd-to-cart">/marketplace/api/products/&lt;product_id&gt;/add-to-cart</h4>
+<ul>
+<li>Endpoint name: Add product to cart</li>
+<li>Supported HTTP methods: GET, POST</li>
+<li>Restrictions: User must be logged in. POST request requires a CSRF token</li>
+<li>What it does:
+<ul>
+<li>GET: Returns a form to choose the number of items to add to cart</li>
+<li>POST: Adds a number of items of a product to user’s cart if form data are valid and returns the status of the action (success/fail)</li>
+</ul>
+</li>
+</ul>
+<h4 id="marketplaceapicartview">/marketplace/api/cart/view</h4>
+<ul>
+<li>Endpoint name: View cart</li>
+<li>Supported HTTP methods: GET</li>
+<li>Restrictions: User must be logged in</li>
+<li>What it does:
+<ul>
+<li>GET: Returns information about a user’s cart including all cart entries</li>
+</ul>
+</li>
+</ul>
+<h4 id="marketplaceapicartcart_entryupdate">/marketplace/api/cart/&lt;cart_entry&gt;/update</h4>
+<ul>
+<li>Endpoint name: Update cart entry</li>
+<li>Supported HTTP methods: GET, POST</li>
+<li>Restrictions: User must be logged in. POST request requires a CSRF token</li>
+<li>What it does:
+<ul>
+<li>GET: Returns a form to choose modify the number of items in a cart entry with ID &lt;carty_entry&gt;, if the ID is valid.</li>
+<li>POST: Updates the corresponding cart entry if form data are valid</li>
+</ul>
+</li>
+</ul>
+<h4 id="marketplaceapicartcart_entrycheckout">/marketplace/api/cart/&lt;cart_entry&gt;/checkout</h4>
+<ul>
+<li>Endpoint name: Checkout cart entry</li>
+<li>Supported HTTP methods: POST</li>
+<li>Restrictions: User must be logged in. POST request requires a CSRF token</li>
+<li>What it does:
+<ul>
+<li>POST: Checks out a cart entry and update inventory of the product</li>
+</ul>
+</li>
+</ul>
+<h4 id="marketplaceapicartcheckout">/marketplace/api/cart/checkout</h4>
+<ul>
+<li>Endpoint name: Checkout cart</li>
+<li>Supported HTTP methods: POST</li>
+<li>Restrictions: User must be logged in. POST request requires a CSRF token</li>
+<li>What it does:
+<ul>
+<li>POST: Checks out a cart by iterating through all cart entries and performs a checkout on every entry. Throws a warning on unsuccessful entry checkout</li>
+</ul>
+</li>
+</ul>
+<h2 id="what-i-did">What I did</h2>
+<ul>
+<li>With the help of Django, I can set up a database quite quickly with all the defined fields and constraints. I then added some methods for each model class to simulate transaction and querying data.</li>
+<li>I defined views (similar to controllers in an MVC pattern) as the backend logic of the website, which is responsible for authenticating users, evaluating requests and manipulating the database.</li>
+<li>I tests for each model class and view function.</li>
+<li>I tried to write comments (documentation style) for each class and function.</li>
+<li>I added Continuous Integration to automatically run tests whenever I push to Github.</li>
+</ul>
+<h2 id="some-notes">Some notes</h2>
+<ul>
+<li>Brainstorming, designing, implementing, testing is tiring.</li>
+<li>Fixing bugs is tiring.</li>
+<li>Some concurrency problem I learned in my Operating Systems class turned out to be very helpful.</li>
+<li>I almost caused a huge bug because I did not authenticate users carefully.</li>
+<li>I’m glad that I’m able to finish this. Thank you for the challenge!</li>
+</ul>
+</div>
+</body>
+
+</html>
